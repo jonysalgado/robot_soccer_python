@@ -71,6 +71,9 @@ class Pose(object):
         self.position = Vector2(x, y)
         self.rotation = rotation
 
+    def dist_square(self, pose):
+        return math.sqrt((self.position.x - pose.position.x)**2 + (self.position.y - pose.position.y)**2)
+
 class TransformCartesian(object):
 
     def __init__(self, linear_speed, rotation):

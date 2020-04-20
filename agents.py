@@ -1,8 +1,8 @@
 # ______________________________________________________________________________
 # importation
-
+import pygame
 from math import sin, cos, fabs
-from constants import SAMPLE_TIME
+from constants import *
 from utils import *
 
 # ______________________________________________________________________________
@@ -113,4 +113,40 @@ class Ball(Agent):
         else: 
             self.cont_friction += increase
 
+# ______________________________________________________________________________
+# class Environment
+
+class Environment:
+    """
+    Represents the environment of simulation.
+    """
+    def __init__(self, window, logo, font):
+        self.window = window
+        self.logo = logo
+        self.font = font
+
+    def draw(self, params):
+        self.draw_field(params["window"])
+        list_centers = params["list_centers"]
+        list_radius = params["list_radius"]
+        list_rotation = params["list_rotation"]
+        for i in range(1, len(list_centers)):
+            center = list_centers[i]
+            final_position = list_radius[i] * (cos(list_rotation[i]), sin(list_rotation[i])) + center
+
+            pygame.draw.circle(window, (255,0,0), (sx1, sy1), r1, 0)
+
+    
+    def draw_field(self, window):
+        """
+        Drawing soccer field
+        """
+
+        pygame.draw.circle(window, (255,255,255), (round(SCREEN_WIDTH/2), round(SCREEN_HEIGHT/2)), 70, 3)
+        pygame.draw.line(window, (255,255,255), (round(SCREEN_WIDTH/2), 30), (round(SCREEN_WIDTH/2), SCREEN_HEIGHT - 30), 3)
+        pygame.draw.line(window, (255,255,255), (30, 30), (round(SCREEN_WIDTH)-30, 30), 3)
+        pygame.draw.line(window, (255,255,255), (30, 30), (30, round(SCREEN_HEIGHT)-30), 3)
+        pygame.draw.line(window, (255,255,255), (round(SCREEN_WIDTH)-30, 30), (round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)-30), 3)
+        pygame.draw.line(window, (255,255,255), (30, round(SCREEN_HEIGHT)-30), (round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)-30), 3)
+       
 

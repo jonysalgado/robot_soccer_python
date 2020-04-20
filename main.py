@@ -1,7 +1,6 @@
 from constants import *
 from utils import Pose
-from player import Roomba 
-from ball import Ball
+from agents import *
 from simulation import *
 from state_machine_ball import FiniteStateMachineBall, MoveForwardStateBall
 import numpy as np
@@ -29,6 +28,7 @@ font = pygame.font.SysFont('Comic Sans MS', 30)
 
 run = True
 time = datetime.datetime.utcnow()
+environment = Environment(window, logo, font)
 while run:
     clock.tick(FREQUENCY)
 
@@ -37,10 +37,7 @@ while run:
             run = False
 
     simulation.update()
-    draw(simulation, window, logo, font)
-    # if (datetime.datetime.now() - time).seconds > 2:
-    #     plot().plat_map(player[0], 0)
-    #     time = datetime.datetime.now()
+    draw(simulation, environment)
 
 
 pygame.quit()

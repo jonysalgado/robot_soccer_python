@@ -17,9 +17,6 @@ BALL_MASS = 0.450
 RADIUS_BALL = 0.05
 
 # players Parameters
-RADIUS_PLAYER = 0.34 / 2.0
-# NUM_1 = 0
-# NUM_2 = 1
 PLAYER_MASS = 75
 
 # Vision Parameters
