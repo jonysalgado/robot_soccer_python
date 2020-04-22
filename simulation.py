@@ -1,10 +1,9 @@
 # ______________________________________________________________________________
 # importation
-import pygame
 import numpy as np
 from pygame.rect import Rect
 from pygame.gfxdraw import pie
-from math import sin, cos, sqrt
+from math import sin, cos, sqrt, pi
 from constants import *
 from utils import *
 from agents import *
@@ -17,7 +16,7 @@ class Simulation:
     """
     Represents the simulation.
     """
-    def __init__(self, player, ball, shockable = True):
+    def __init__(self, player, ball, shockable):
         """
         Creates the simulation.
 
@@ -66,16 +65,16 @@ class Simulation:
         # Testing if the bounding box has hit a wall
         if params["left"] <= 0.0:
             self.player[num].pose.position.x = self.player[num].radius
-            return True
+            return True, "left", (0,0)
         if params["right"] >= params["width"]:
             self.player[num].pose.position.x = params["width"] - self.player[num].radius
-            return True
+            return True, "right", (0,0)
         if params["top"] <= 0.0:
             self.player[num].pose.position.y = self.player[num].radius
-            return True
+            return True, "top", (0,0)
         if params["bottom"] >= params["height"]:
             self.player[num].pose.position.y = params["height"] - self.player[num].radius
-            return True
+            return True, "bottom", (0,0)
 
         return self.check_collision_with_players(num)
 
@@ -125,15 +124,18 @@ class Simulation:
         :return: the bumper state (if a collision has been detected).
         :rtype: bool
         """
+        bumper_state, n_player, speed = False, None, (0,0)
+        if not self.shockable:
+            return bumper_state, n_player, speed
 
-        bumper_state = False
         for i in range(len(self.player)):
             if i != num:
                 dist_players = self.player[num].pose.dist_square(self.player[i].pose)
                 if dist_players <=(self.player[num].radius + self.player[i].radius):
-                    bumper_state = True
-        
-        return bumper_state and self.shockable
+                    bumper_state, n_player = True, i 
+            
+        return bumper_state, n_player, speed
+
     
 
     # __________________________________________________________________________
@@ -141,74 +143,90 @@ class Simulation:
     
     def check_collision_ball(self):
         """
-        Checks collision between the ball with the walls and other players.
+        Checks collision between the ball with the walls and other players. If the ball
+        collide, then return where.
 
         :return: the bumper state (if a collision has been detected).
         :rtype: bool
+        :return: where the ball collide
+        :rtype: string or int or None
         """
         params = self.get_collision_params(isBall=True)
         # Testing if the bounding box has hit a wall
         if params["left"] <= 0.0: 
             self.ball.pose.position.x = self.ball.radius
-            return True
+            return True, "left", (0,0)
         if params["right"] >= params["width"]:
             self.ball.pose.position.x = params["width"] - self.ball.radius
-            return True
+            return True, "right", (0,0)
         if params["top"] <= 0.0:
             self.ball.pose.position.y = self.ball.radius
-            return True
+            return True, "top", (0,0)
         if params["bottom"] >= params["height"]:
             self.ball.pose.position.y = params["height"] - self.ball.radius
-            return True
+            return True, "bottom", (0,0)
 
         # check collision with other player
-        return self.check_collision_between_ball_players() or self.check_velocity_collision()
+        return self.check_collision_between_ball_players()
 
 
-    def check_collision_between_ball_players(self, num=-1):
+
+    def check_collision_between_ball_players(self):
         """
-        Check collision with ball and other player.
-
-        :param num: the index of player in player's array.
-        :type num: int
-        :return: the bumper state (if a collision has been detected).
-        :rtype: bool
-        """
-        bumper_state = False
-        if num not in range(len(self.player)):
-            for i in range(len(self.player)):
-                dist_player = self.ball.pose.dist_square(self.player[i].pose)
-                if dist_player <=(RADIUS_BALL + self.player[i].radius):
-                    bumper_state = True
-        else:
-            dist_player = self.ball.pose.dist_square(self.player[num].pose)
-            if dist_player <=(RADIUS_BALL + self.player[num].radius):
-                bumper_state = True
-        
-        return bumper_state
-
-
-    def check_velocity_collision(self):
-        """
-        Check if ball will collide or if ball has already collided.
+        Check if ball collide with others players.
 
         :return: the bumper state (if a collision has been detected).
         :rtype: bool
+        :return: the number of player that ball collide
+        :rtype: int
         """
 
         velocityBall = TransformCartesian(self.ball.linear_speed, self.ball.pose.rotation)
         velocityBall = Vector2(velocityBall.x, velocityBall.y)
 
+        bumper_state, n_player, speed = False, None, (0,0)
         for i in range(len(self.player)):
             dist_player = self.ball.pose.dist_square(self.player[i].pose)
             dirvector = Vector2(self.ball.pose.position.x - self.player[i].pose.position.x, self.ball.pose.position.y - self.player[i].pose.position.y)
             dirvector.normalize()
             u = velocityBall.dot(dirvector)
-            if u > 0 and dist_player <=(RADIUS_BALL + self.player[i].radius):
-                return False
+            if u < 0 and dist_player <= (RADIUS_BALL + self.player[i].radius):
+                bumper_state, n_player, speed = True, i, self.calculate_speed(self.player[i], self.ball)
         
-        return True
+        return bumper_state, n_player, speed
     
+    def calculate_speed(self, collide_player, agent):
+        """
+        Calculate the velocity of agent after collision.
+
+        :param collide_player: player that collide with agent.
+        :type collide_player: Agent
+        :param agent: agent that we want calculate the velocity
+        :type num: Agent
+        """
+        if agent.linear_speed < 1.0e-2:
+            agent.linear_speed = collide_player.linear_speed
+        
+        velocity_ball = TransformCartesian(agent.linear_speed, agent.pose.rotation)
+        velocity_ball = Vector2(velocity_ball.x, velocity_ball.y)
+        velocity_player = TransformCartesian(collide_player.linear_speed, collide_player.pose.rotation)
+        velocity_player = Vector2(velocity_player.x, velocity_player.y)
+        dirvector = Vector2(agent.pose.position.x - collide_player.pose.position.x, agent.pose.position.y - collide_player.pose.position.y)
+        dirvector.normalize()
+        u1 = velocity_ball.dot(dirvector)
+        u1normal = Vector2(velocity_ball.x - u1 * dirvector.x,velocity_ball.y - u1 * dirvector.y)
+        u2 = velocity_player.dot(dirvector)
+        v1 = ((BALL_MASS - PLAYER_MASS) * u1 + 2 * BALL_MASS * u2) / ( BALL_MASS + PLAYER_MASS)
+        vfinal = Vector2(u1normal.x + v1 * dirvector.x,u1normal.y + v1 * dirvector.y)
+        vfinal = TransformPolar(2*vfinal.x, 2*vfinal.y)
+        if u1 < 0:
+            if vfinal.rotation > 1.0e-2:
+                vfinal.rotation *= -1
+            else:
+                vfinal.rotation = pi
+        
+        return vfinal.linear_speed, vfinal.rotation
+
     # __________________________________________________________________________
     # methods for restart game if ball is in the goal
     
@@ -256,12 +274,12 @@ class Simulation:
         
         for i in range(len(self.player)):
             # update collision
-            self.player[i].set_bumper_state(self.check_collision(i))
+            self.player[i].set_bumper_state_collision(self.check_collision(i))
             # Updating the player's movement
             self.player[i].update()
         
         # update ball's collision
-        self.ball.set_bumper_state(self.check_collision_ball())
+        self.ball.set_bumper_state_collision(self.check_collision_ball())
         # Updating the ball's movement
         self.ball.update()
         
@@ -273,72 +291,29 @@ class Simulation:
         Draws the roomba and its movement history.
 
         :param window: pygame's window where the drawing will occur.
+        :param environment: this param is to draw the window
+        :type environment: Environment
         """
         list_centers = [np.array([round(M2PIX * self.ball.pose.position.x), round(M2PIX * self.ball.pose.position.y)])]
-        list_radius = [RADIUS_BALL]
+        list_radius = [round(M2PIX * RADIUS_BALL)]
         list_rotation = [self.ball.pose.rotation]
         for i in range(len(self.player)):
             list_centers.append(np.array([round(M2PIX * self.player[i].pose.position.x), round(M2PIX * self.player[i].pose.position.y)]))
-            list_radius.append(self.player[i].radius)
+            list_radius.append(round(M2PIX * self.player[i].radius))
             list_rotation.append(self.player[i].pose.rotation)
         params = {
             "window": window,
             "list_centers": list_centers,
             "list_radius": list_radius,
-            "list_rotation": list_rotation
+            "list_rotation": list_rotation,
+            "left_goal": self.left_goal,
+            "right_goal": self.right_goal
 
         }
 
+        environment.draw(params)
 
-        ex1 = round(M2PIX * (self.player[NUM_1].pose.position.x +self.player[NUM_1].radius * cos(self.player[NUM_1].pose.rotation)))
-        ey1 = round(M2PIX * (self.player[NUM_1].pose.position.y + self.player[NUM_1].radius * sin(self.player[NUM_1].pose.rotation)))
-        r1 = round(M2PIX * self.player[NUM_1].radius)
-        # Drawing roomba's inner circle
-        pygame.draw.circle(window, (255,0,0), (sx1, sy1), r1, 0)
-        # Drawing roomba's outer circle
-        pygame.draw.circle(window, (50, 50, 50), (sx1, sy1), r1, 4)
-        # Drawing roomba's orientation
-        pygame.draw.line(window, (50, 50, 50), (sx1, sy1), (ex1, ey1), 3)
-
-        # roomba 2
-        sx2 = round(M2PIX * self.player[NUM_2].pose.position.x)
-        sy2 = round(M2PIX * self.player[NUM_2].pose.position.y)
-        ex2 = round(M2PIX * (self.player[NUM_2].pose.position.x +self.player[NUM_2].radius * cos(self.player[NUM_2].pose.rotation)))
-        ey2 = round(M2PIX * (self.player[NUM_2].pose.position.y + self.player[NUM_2].radius * sin(self.player[NUM_2].pose.rotation)))
-        r2 = round(M2PIX * self.player[NUM_2].radius)
-        # Drawing roomba's inner circle
-        pygame.draw.circle(window, (238, 203, 0), (sx2, sy2), r2, 0) 
-        # Drawing roomba's outer circle
-        pygame.draw.circle(window, (50, 50, 50), (sx2, sy2), r2, 4)
-        # Drawing roomba's orientation
-        pygame.draw.line(window, (50, 50, 50), (sx2, sy2), (ex2, ey2), 3)
-
-        # ball
-        sxB = round(M2PIX * self.ball.pose.position.x)
-        syB = round(M2PIX * self.ball.pose.position.y)
-        exB = round(M2PIX * (self.ball.pose.position.x +self.ball.radius * cos(self.ball.pose.rotation)))
-        eyB = round(M2PIX * (self.ball.pose.position.y + self.ball.radius * sin(self.ball.pose.rotation)))
-        rB = round(M2PIX * self.ball.radius)
-        # Drawing roomba's inner circle
-        pygame.draw.circle(window, (255,255,255), (sxB, syB), rB, 0)
-        # Drawing roomba's outer circle
-        pygame.draw.circle(window, (255, 255, 255), (sxB, syB), rB, 4)
-        # Drawing soccer goal
-        pygame.draw.rect(window, (0, 0, 0), Rect(0, round(SCREEN_HEIGHT)/2-100, 30, 200))
-        pygame.draw.rect(window, (0, 0, 0), Rect(round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)/2-100, 30, 200))
-        # scoreboard
-        pygame.draw.rect(window, (0, 0, 0), Rect(28, round(SCREEN_HEIGHT-30), 250, 30))
-        # draw vision
-        self.draw_vision(window, self.player[NUM_1].pose.position, self.player[NUM_2].pose.position)
-
-    def draw_vision(self, window, position1, position2):
-        # player1
-        pie(window, round(M2PIX * position1.x), round(M2PIX * position1.y), round(M2PIX * 2.5 * self.player[NUM_1].radius), (int(RADIAN_TO_DEGREE * self.player[NUM_1].pose.rotation)-45)%360, (int(RADIAN_TO_DEGREE * self.player[NUM_1].pose.rotation)+45)%360 , (255,255,255))
-        # player2
-        pie(window, round(M2PIX * position2.x), round(M2PIX * position2.y), round(M2PIX * 2.5 * self.player[NUM_2].radius), (int(RADIAN_TO_DEGREE * self.player[NUM_2].pose.rotation)-45)%360, (int(RADIAN_TO_DEGREE * self.player[NUM_2].pose.rotation)+45)%360, (255,255,255))
-        
-
-def draw(simulation, environment):
+def draw(simulation, window, environment):
     """
     Redraws the pygame's window.
 
@@ -346,17 +321,7 @@ def draw(simulation, environment):
     :param window: pygame's window where the drawing will occur.
     """
 
-
-    # scoreboard
-    scoreboard = "Left " + str(simulation.left_goal) + " x " + str(simulation.right_goal) + " Right"
-    textsurface = font.render(scoreboard, False, (255, 255, 255))
-    
-
-    window.fill((35,142,35))
-    window.blit(logo, (round(SCREEN_WIDTH)/2+100,40))
-    
     simulation.draw(window, environment)
-    window.blit(textsurface, (40,round(SCREEN_HEIGHT-20)))
     pygame.display.update()
 
 

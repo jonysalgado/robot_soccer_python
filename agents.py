@@ -1,6 +1,9 @@
 # ______________________________________________________________________________
 # importation
 import pygame
+import numpy as np
+from pygame.rect import Rect
+from pygame.gfxdraw import pie
 from math import sin, cos, fabs
 from constants import *
 from utils import *
@@ -25,12 +28,15 @@ class Agent:
         :type bumper_state: boolean
         """
         self.pose = pose
-        self.linear_speed = 0.0
+        self.linear_speed = 1.0
         self.angular_speed = 0.0
         self.max_linear_speed = max_linear_speed
         self.max_angular_speed = max_angular_speed
         self.radius = radius
         self.bumper_state = False
+        self.collision = None
+        self.collision_player_speed = (0,0)
+    
     
     def set_velocity(self, linear_speed, angular_speed):
         """
@@ -44,14 +50,15 @@ class Agent:
         self.linear_speed = clamp(linear_speed, -self.max_linear_speed, self.max_linear_speed)
         self.angular_speed = clamp(angular_speed, -self.max_angular_speed, self.max_angular_speed)
 
-    def set_bumper_state(self, bumper_state):
+    def set_bumper_state_collision(self, bumper_state_collision):
         """
-        Sets the bumper state.
+        Sets the bumper state and where agent collide.
 
-        :param bumper_state: if the bumper has detected an obstacle.
-        :type bumper_state: bool
+        :param bumper_state_collision: if the bumper has detected an obstacle and where agent collide.
+        :type bumper_state_collision: tuple
         """
-        self.bumper_state = bumper_state
+        self.bumper_state, self.collision, self.collision_player_speed = bumper_state_collision
+
 
     def get_bumper_state(self):
         """
@@ -61,7 +68,19 @@ class Agent:
         :rtype: bool
         """
         return self.bumper_state
+
+    def get_collision(self):
+        """
+        Obtains the collision.
+
+        :return: where agent collide.
+        :rtype: string or int or None
+        """
+        return self.collision
     
+    def get_collision_player_speed(self):
+        return self.collision_player_speed
+
     def move(self):
         """
         Moves the robot during one time step.
@@ -101,18 +120,24 @@ class Player(Agent):
     
 class Ball(Agent):
     """
-    Represents a roomba cleaning robot.
+    Represents a ball.
     """
+    def __init__(self, pose, max_linear_speed, max_angular_speed, radius, behavior):
+        Agent.__init__(self, pose, max_linear_speed, max_angular_speed, radius)
+        self.behavior = behavior
+        self.cont_friction = 0
 
     def set_rotation(self, increase):
             self.pose.rotation += increase
     
-    def set_cont_friction(self, initial, increase=0):
+    def set_cont_friction(self, initial, increase):
         if initial:
             self.cont_friction = 0
         else: 
             self.cont_friction += increase
 
+    def update(self):
+        self.behavior.update(self)
 # ______________________________________________________________________________
 # class Environment
 
@@ -120,33 +145,106 @@ class Environment:
     """
     Represents the environment of simulation.
     """
-    def __init__(self, window, logo, font):
+    def __init__(self, window):
         self.window = window
-        self.logo = logo
-        self.font = font
+        self.logo = pygame.image.load('team_logo.xpm')
+        self.font = pygame.font.SysFont('Comic Sans MS', 30)
+        self.list_centers = None
+        self.list_radius = None
+        self.list_rotation = None
 
     def draw(self, params):
-        self.draw_field(params["window"])
-        list_centers = params["list_centers"]
-        list_radius = params["list_radius"]
-        list_rotation = params["list_rotation"]
-        for i in range(1, len(list_centers)):
-            center = list_centers[i]
-            final_position = list_radius[i] * (cos(list_rotation[i]), sin(list_rotation[i])) + center
-
-            pygame.draw.circle(window, (255,0,0), (sx1, sy1), r1, 0)
-
-    
-    def draw_field(self, window):
         """
-        Drawing soccer field
+        This method call all other methods for drawing.
+
+        :param params: params for drawing the window.
+        """
+        self.update(params)
+        self.draw_field()
+        self.draw_players_and_ball()
+        self.draw_soccer_goal_and_scoreboard()
+        self.draw_vision()
+        
+    def draw_players_and_ball(self):
+        """
+        Drawing players and ball.
+
+        :param params: params for drawing the window.
         """
 
-        pygame.draw.circle(window, (255,255,255), (round(SCREEN_WIDTH/2), round(SCREEN_HEIGHT/2)), 70, 3)
-        pygame.draw.line(window, (255,255,255), (round(SCREEN_WIDTH/2), 30), (round(SCREEN_WIDTH/2), SCREEN_HEIGHT - 30), 3)
-        pygame.draw.line(window, (255,255,255), (30, 30), (round(SCREEN_WIDTH)-30, 30), 3)
-        pygame.draw.line(window, (255,255,255), (30, 30), (30, round(SCREEN_HEIGHT)-30), 3)
-        pygame.draw.line(window, (255,255,255), (round(SCREEN_WIDTH)-30, 30), (round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)-30), 3)
-        pygame.draw.line(window, (255,255,255), (30, round(SCREEN_HEIGHT)-30), (round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)-30), 3)
+        # draw players
+        for i in range(1, len(self.list_centers)):
+            center = self.list_centers[i]
+            final_position = self.list_radius[i] * np.array([cos(self.list_rotation[i]), sin(self.list_rotation[i])]) + center
+            if i <= len(self.list_centers)/2:
+                color = RED_COLOR
+            else:
+                color = YELLOW_COLOR
+            # Drawing player's inner circle
+            pygame.draw.circle(self.window, color, (center[0], center[1]), self.list_radius[i], 0)
+            # Drawing player's outer circle
+            pygame.draw.circle(self.window, GRAY_COLOR, (center[0], center[1]), self.list_radius[i], 4)
+            # Drawing player's orientation
+            pygame.draw.line(self.window, GRAY_COLOR, (center[0], center[1]), (final_position[0], final_position[1]), 3)
+
+
+        # draw ball
+        center = self.list_centers[0]
+        # Drawing player's inner circle
+        pygame.draw.circle(self.window, WHITE_COLOR, (center[0], center[1]), self.list_radius[0], 0)
+
+    def draw_field(self):
+        """
+        Drawing soccer field.
+
+        :param window: pygame's window where the drawing will occur.
+        """
+        scoreboard = "Left " + str(self.left_goal) + " x " + str(self.right_goal) + " Right"
+        textsurface = self.font.render(scoreboard, False, WHITE_COLOR)
+
+        self.window.fill((35,142,35))
+        self.window.blit(self.logo, (round(SCREEN_WIDTH)/2+100,40))
+        self.window.blit(textsurface, (40,round(SCREEN_HEIGHT-20)))
+
+        pygame.draw.circle(self.window, (255,255,255), (round(SCREEN_WIDTH/2), round(SCREEN_HEIGHT/2)), 70, 3)
+        pygame.draw.line(self.window, (255,255,255), (round(SCREEN_WIDTH/2), 30), (round(SCREEN_WIDTH/2), SCREEN_HEIGHT - 30), 3)
+        pygame.draw.line(self.window, (255,255,255), (30, 30), (round(SCREEN_WIDTH)-30, 30), 3)
+        pygame.draw.line(self.window, (255,255,255), (30, 30), (30, round(SCREEN_HEIGHT)-30), 3)
+        pygame.draw.line(self.window, (255,255,255), (round(SCREEN_WIDTH)-30, 30), (round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)-30), 3)
+        pygame.draw.line(self.window, (255,255,255), (30, round(SCREEN_HEIGHT)-30), (round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)-30), 3)
        
+    def draw_soccer_goal_and_scoreboard(self):
+        """
+        Drawing soccer goal and scoreboard.
+        """
+        
+        # Drawing soccer goal
+        pygame.draw.rect(self.window, (0, 0, 0), Rect(0, round(SCREEN_HEIGHT)/2-100, 30, 200))
+        pygame.draw.rect(self.window, (0, 0, 0), Rect(round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)/2-100, 30, 200))
+        # scoreboard
+        pygame.draw.rect(self.window, (0, 0, 0), Rect(28, round(SCREEN_HEIGHT-30), 250, 30))
+        
+    def draw_vision(self):
+        """
+        Drawing the vision of the players.
 
+        :param params: params for drawing the window.
+        """
+
+        for i in range(1, len(self.list_centers)):
+            center = self.list_centers[i]
+            pie(self.window, center[0], center[1], round(2.5 * self.list_radius[i]), (int(RADIAN_TO_DEGREE * self.list_rotation[i])-45)%360, (int(RADIAN_TO_DEGREE * self.list_rotation[i])+45)%360 , WHITE_COLOR)
+        
+    def update(self, params):
+        """
+        Update params of environment.
+
+        :param params: params for drawing the window.
+        """
+
+        self.window = params["window"]
+        self.list_centers = params["list_centers"]
+        self.list_radius = params["list_radius"]
+        self.list_rotation = params["list_rotation"]
+        self.left_goal = params["left_goal"]
+        self.right_goal = params["right_goal"]

@@ -2,7 +2,7 @@
 
 import math
 # ______________________________________________________________________________
-# agents
+# return a maximum value
 
 def clamp(value, min, max):
     """
@@ -19,6 +19,8 @@ def clamp(value, min, max):
         return min
     return value
 
+# ______________________________________________________________________________
+# class for vactor 2D
 class Vector2(object):
     """
     Represents a bidimensional geometric vector.
@@ -53,6 +55,8 @@ class Vector2(object):
     def rotation(self, angle):
         return Vector2(self.x*math.cos(angle), self.y*math.sin(angle))
 
+# ______________________________________________________________________________
+# class for position
 class Pose(object):
     """
     Represents a pose on the plane, i.e. a (x, y) position plus a rotation.
