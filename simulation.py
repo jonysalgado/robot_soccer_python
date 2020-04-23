@@ -7,6 +7,7 @@ from math import sin, cos, sqrt, pi
 from constants import *
 from utils import *
 from agents import *
+from copy import deepcopy
 import datetime
 
 # ______________________________________________________________________________
@@ -16,7 +17,7 @@ class Simulation:
     """
     Represents the simulation.
     """
-    def __init__(self, player, ball, shockable):
+    def __init__(self, player, ball, shockable, full_vision):
         """
         Creates the simulation.
 
@@ -30,6 +31,7 @@ class Simulation:
         self.player = player
         self.ball = ball
         self.shockable = shockable
+        self.full_vision = full_vision
         self.left_goal = 0
         self.right_goal = 0
         self.goal = datetime.datetime.utcnow()
@@ -42,10 +44,10 @@ class Simulation:
         :return: a list of players and ball's pose.
         :rtype: list
         """
-        initial_position = [self.ball.pose]
+        initial_position = [deepcopy(self.ball.pose)]
         for i in range(len(self.player)):
-            initial_position.append(self.player[i].pose)
-        
+            initial_position.append(deepcopy(self.player[i].pose))
+
         return initial_position
 
     # __________________________________________________________________________
@@ -187,7 +189,7 @@ class Simulation:
         bumper_state, n_player, speed = False, None, (0,0)
         for i in range(len(self.player)):
             dist_player = self.ball.pose.dist_square(self.player[i].pose)
-            dirvector = Vector2(self.ball.pose.position.x - self.player[i].pose.position.x, self.ball.pose.position.y - self.player[i].pose.position.y)
+            dirvector = self.ball.pose.position.dirvector(self.player[i].pose.position)
             dirvector.normalize()
             u = velocityBall.dot(dirvector)
             if u < 0 and dist_player <= (RADIUS_BALL + self.player[i].radius):
@@ -211,7 +213,7 @@ class Simulation:
         velocity_ball = Vector2(velocity_ball.x, velocity_ball.y)
         velocity_player = TransformCartesian(collide_player.linear_speed, collide_player.pose.rotation)
         velocity_player = Vector2(velocity_player.x, velocity_player.y)
-        dirvector = Vector2(agent.pose.position.x - collide_player.pose.position.x, agent.pose.position.y - collide_player.pose.position.y)
+        dirvector = agent.pose.position.dirvector(collide_player.pose.position)
         dirvector.normalize()
         u1 = velocity_ball.dot(dirvector)
         u1normal = Vector2(velocity_ball.x - u1 * dirvector.x,velocity_ball.y - u1 * dirvector.y)
@@ -260,9 +262,22 @@ class Simulation:
         """
         self.ball.pose = self.initial_position[0]
         self.ball.linear_speed = 0.0
-        for i in range(len(self.initial_position) - 1):
-            self.player[i+1].pose = self.initial_position[i+1]
-            self.player[i+1].linear_speed = 0.0
+        for i in range(1, len(self.initial_position)):
+            self.player[i-1].pose = self.initial_position[i]
+            self.player[i-1].linear_speed = 0.0
+    
+    # __________________________________________________________________________
+    # method for control agents
+
+    def set_commands(self, commands):
+        """
+        Sets commands.
+
+        param commands: list of tuples for seting velocity of agents.
+        type commands: list.
+        """
+        for i in range(len(self.player)):
+            self.player[i].set_velocity(commands[i][0], commands[i][1])
 
     # __________________________________________________________________________
     # method for update simulation
@@ -312,6 +327,17 @@ class Simulation:
         }
 
         environment.draw(params)
+
+        # test
+        print("ok")
+        sensors = self.player[1].sensors
+        distances = sensors.calculate_distance([])
+        for dist in distances:
+            if dist.x != math.inf and dist.y != math.inf:
+                d = Vector2(-self.player[1].pose.position.x, -self.player[1].pose.position.y)
+                v = dist.dirvector(d)
+                print(v.x, v.y, self.player[1].pose.position.x, self.player[1].pose.position.y)
+                pygame.draw.line(window, BLACK_COLOR, (self.player[1].pose.position.x * M2PIX, self.player[1].pose.position.y * M2PIX), (v.x * M2PIX, v.y * M2PIX), 3)
 
 def draw(simulation, window, environment):
     """

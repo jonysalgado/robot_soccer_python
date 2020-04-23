@@ -5,10 +5,11 @@ from utils import Pose
 from agents import Ball
 from simulation import *
 from state_machine_ball import FiniteStateMachineBall, MoveForwardStateBall
+import datetime
 
 # ______________________________________________________________________________
 # simulation2D function
-def simulation2D(players, shockable = True):
+def simulation2D(players, shockable = True, full_vision = False):
     """
     This function initialize the simulation and return a object that the user 
     can pass the controls and get the sensors information.
@@ -17,32 +18,40 @@ def simulation2D(players, shockable = True):
     :type: list of Player
     :param shockable: parameter that informs if players will collide with themselves
     :type shockable: bool
+    :param full_vision: parameter that informs if player will see every thing even if it’s not in the vision cone.
+    :type full_vision: bool
     """
-
-    pygame.init()
-    window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Robot soccer 2D simulation")
-    clock = pygame.time.Clock()
 
     
     behavierBall = FiniteStateMachineBall(MoveForwardStateBall(False))
     poseBall = Pose(PIX2M * SCREEN_WIDTH * 3 / 4.0, PIX2M * SCREEN_HEIGHT / 2.0, 0)
     ball = Ball(poseBall, 1.0, 100, RADIUS_BALL, behavierBall)
+    for player in players:
+        player.sensors.set_full_vision = full_vision
+        
+    return Simulation(np.array(players), ball, shockable, full_vision)
 
-    simulation = Simulation(np.array(players), ball, shockable)
+   
 
+def init_simulation(simulation):
+    now = datetime.datetime.now()
+    pygame.init()
+    window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Robot soccer 2D simulation")
+    clock = pygame.time.Clock()
 
-    run = True
     environment = Environment(window)
-    while run:
+    while (datetime.datetime.now() - now).seconds < 5:
         clock.tick(FREQUENCY)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
+                end_simulation()
 
         simulation.update()
         draw(simulation, window, environment)
 
 
+
+def end_simulation():
     pygame.quit()

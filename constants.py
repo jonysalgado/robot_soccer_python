@@ -1,8 +1,8 @@
 from math import pi
 # Simulation Parameters
 # soccer field (105,68) x 6
-SCREEN_WIDTH = 1000 # 636
-SCREEN_HEIGHT = 650 # 414
+SCREEN_WIDTH = 1000 
+SCREEN_HEIGHT = 650 
 PIX2M = 0.01  # factor to convert from pixels to meters
 M2PIX = 100.0  # factor to convert from meters to pixels
 
@@ -32,3 +32,5 @@ GRAY_COLOR = (50, 50, 50)
 YELLOW_COLOR = (238, 203, 0)
 BLACK_COLOR = (0, 0, 0)
 WHITE_COLOR = (255,255,255)
+
+

@@ -4,7 +4,7 @@ import pygame
 import numpy as np
 from pygame.rect import Rect
 from pygame.gfxdraw import pie
-from math import sin, cos, fabs
+from math import sin, cos, fabs, acos, pi, inf
 from constants import *
 from utils import *
 
@@ -113,8 +113,9 @@ class Player(Agent):
     """
     Represents a player robot.
     """
-    pass
-
+    def __init__(self, pose, max_linear_speed, max_angular_speed, radius):
+        Agent.__init__(self, pose, max_linear_speed, max_angular_speed, radius)
+        self.sensors = Sensors(self)
 # ______________________________________________________________________________
 # class Ball
     
@@ -138,9 +139,89 @@ class Ball(Agent):
 
     def update(self):
         self.behavior.update(self)
+
+ # ______________________________________________________________________________
+# class Sensors
+class Sensors:
+    """
+    Represents the sensors of a player.
+    """
+    def __init__(self, agent):
+        self.flag_points = self.init_flag_points()
+        self.agent_center = agent.pose
+        self.full_vision = False
+
+    def set_full_vision(self, full_vision):
+        self.full_vision = full_vision
+
+    def init_flag_points(self):
+        """
+        Find the flags around the field.
+
+        return: a list of points.
+        rtype: list
+        """
+        points = []
+        for i in range(11):
+            points.append((round(SCREEN_WIDTH * i/10), 0))
+        for i in range(11):
+            points.append((SCREEN_WIDTH, round(SCREEN_HEIGHT * i/10)))
+        for i in range(11):
+            points.append((round(SCREEN_WIDTH * i/10), SCREEN_HEIGHT))
+        for i in range(11):
+            points.append((0, round(SCREEN_HEIGHT * i/10)))
+        
+
+        return points
+
+    def calculate_distance(self, list_centers):
+        """
+        Calculate the vector distance between agent and other players, ball and flags.
+
+        param agent: the agent that we are calculating the distances.
+        type agent: Player
+        param list_centers: the list of center's position that players and ball.
+        type list_centers: Pose.position
+        return: list of distance to points
+        rtype: list
+        """
+        points = self.flag_points + list_centers
+        dirvector_list = []
+
+        for point in points:
+            vector_point = Vector2(point[0], point[1])
+            dirvector = vector_point.dirvector(self.agent_center.position)
+            dirvector = self.is_visible(dirvector)
+            dirvector_list.append(dirvector)
+        
+        return dirvector_list
+
+    def is_visible(self, vector):
+        """
+        Checks if a point is visible for a agent.
+
+        param vector: vector that links the center of the agent to the point in question.
+        type vector: Vector2
+        return: the same vector if is visible and infinity vector if isn't.
+        rtype: Vector2
+        """
+        if not self.full_vision:
+            vector_agent = TransformCartesian(1, self.agent_center.rotation)
+            vector_agent = Vector2(vector_agent.x, vector_agent.y)
+            angle = acos(vector_agent.dot(vector)/vector.magnitude())
+
+            if angle <= pi/4 or angle >= 7*pi/4:
+                return vector
+
+            return Vector2(inf, inf)
+        
+        return vector
+        
+
+
+
 # ______________________________________________________________________________
 # class Environment
-
 class Environment:
     """
     Represents the environment of simulation.
@@ -199,12 +280,8 @@ class Environment:
 
         :param window: pygame's window where the drawing will occur.
         """
-        scoreboard = "Left " + str(self.left_goal) + " x " + str(self.right_goal) + " Right"
-        textsurface = self.font.render(scoreboard, False, WHITE_COLOR)
-
         self.window.fill((35,142,35))
-        self.window.blit(self.logo, (round(SCREEN_WIDTH)/2+100,40))
-        self.window.blit(textsurface, (40,round(SCREEN_HEIGHT-20)))
+        
 
         pygame.draw.circle(self.window, (255,255,255), (round(SCREEN_WIDTH/2), round(SCREEN_HEIGHT/2)), 70, 3)
         pygame.draw.line(self.window, (255,255,255), (round(SCREEN_WIDTH/2), 30), (round(SCREEN_WIDTH/2), SCREEN_HEIGHT - 30), 3)
@@ -212,17 +289,22 @@ class Environment:
         pygame.draw.line(self.window, (255,255,255), (30, 30), (30, round(SCREEN_HEIGHT)-30), 3)
         pygame.draw.line(self.window, (255,255,255), (round(SCREEN_WIDTH)-30, 30), (round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)-30), 3)
         pygame.draw.line(self.window, (255,255,255), (30, round(SCREEN_HEIGHT)-30), (round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)-30), 3)
+
        
     def draw_soccer_goal_and_scoreboard(self):
         """
         Drawing soccer goal and scoreboard.
         """
-        
+        scoreboard = "Left " + str(self.left_goal) + " x " + str(self.right_goal) + " Right"
+        textsurface = self.font.render(scoreboard, False, WHITE_COLOR)
         # Drawing soccer goal
         pygame.draw.rect(self.window, (0, 0, 0), Rect(0, round(SCREEN_HEIGHT)/2-100, 30, 200))
         pygame.draw.rect(self.window, (0, 0, 0), Rect(round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)/2-100, 30, 200))
         # scoreboard
         pygame.draw.rect(self.window, (0, 0, 0), Rect(28, round(SCREEN_HEIGHT-30), 250, 30))
+
+        self.window.blit(self.logo, (round(SCREEN_WIDTH)/2+100,40))
+        self.window.blit(textsurface, (40,round(SCREEN_HEIGHT-20)))
         
     def draw_vision(self):
         """

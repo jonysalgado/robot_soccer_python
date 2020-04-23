@@ -54,6 +54,9 @@ class Vector2(object):
     # padronization: angle in degrees
     def rotation(self, angle):
         return Vector2(self.x*math.cos(angle), self.y*math.sin(angle))
+    
+    def dirvector(self, v):
+        return Vector2(self.x - v.x, self.y - v.y)
 
 # ______________________________________________________________________________
 # class for position
