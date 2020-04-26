@@ -45,8 +45,8 @@ class Simulation:
         :rtype: list
         """
         initial_position = [deepcopy(self.ball.pose)]
-        for i in range(len(self.player)):
-            initial_position.append(deepcopy(self.player[i].pose))
+        for player in self.player:
+            initial_position.append(deepcopy(player.pose))
 
         return initial_position
 
@@ -130,11 +130,14 @@ class Simulation:
         if not self.shockable:
             return bumper_state, n_player, speed
 
-        for i in range(len(self.player)):
-            if i != num:
-                dist_players = self.player[num].pose.dist_square(self.player[i].pose)
-                if dist_players <=(self.player[num].radius + self.player[i].radius):
-                    bumper_state, n_player = True, i 
+        cont = 0
+        for player in self.player:
+            if cont != num:
+                dist_players = self.player[num].pose.dist_square(player.pose)
+                if dist_players <=(self.player[num].radius + player.radius):
+                    bumper_state, n_player = True, cont
+                    player.set_velocity(BACK_SPEED_COLISION,0)
+                cont += 1
             
         return bumper_state, n_player, speed
 
@@ -187,13 +190,15 @@ class Simulation:
         velocityBall = Vector2(velocityBall.x, velocityBall.y)
 
         bumper_state, n_player, speed = False, None, (0,0)
-        for i in range(len(self.player)):
-            dist_player = self.ball.pose.dist_square(self.player[i].pose)
-            dirvector = self.ball.pose.position.dirvector(self.player[i].pose.position)
+        cont = 0
+        for players in self.player:
+            dist_player = self.ball.pose.dist_square(players.pose)
+            dirvector = self.ball.pose.position.dirvector(players.pose.position)
             dirvector.normalize()
             u = velocityBall.dot(dirvector)
-            if u < 0 and dist_player <= (RADIUS_BALL + self.player[i].radius):
-                bumper_state, n_player, speed = True, i, self.calculate_speed(self.player[i], self.ball)
+            if u < 0 and dist_player <= (RADIUS_BALL + players.radius):
+                bumper_state, n_player, speed = True, cont, self.calculate_speed(players, self.ball)
+            cont += 1
         
         return bumper_state, n_player, speed
     
@@ -276,8 +281,32 @@ class Simulation:
         param commands: list of tuples for seting velocity of agents.
         type commands: list.
         """
+        cont = 0
+        for player in self.player:
+            player.set_velocity(*commands[cont])
+            cont += 1
+
+    def get_sensors(self):
+        """
+        Get vector distance for flags, player and ball.
+
+        return: list of sensors vector distances of each player.
+        rtype: list
+        """
+        players_sensors = []
         for i in range(len(self.player)):
-            self.player[i].set_velocity(commands[i][0], commands[i][1])
+            list_center = []
+            for j in range(len(self.player)):
+                if j != i:
+                    list_center.append((
+                        self.player[j].pose.position.x * M2PIX,
+                        self.player[j].pose.position.y * M2PIX))
+            sensors_vector = self.player[i].sensors.calculate_distance(
+                self.player[i], list_center)
+            players_sensors.append(sensors_vector)
+        
+        return players_sensors
+
 
     # __________________________________________________________________________
     # method for update simulation
@@ -329,15 +358,18 @@ class Simulation:
         environment.draw(params)
 
         # test
-        print("ok")
-        sensors = self.player[1].sensors
-        distances = sensors.calculate_distance([])
-        for dist in distances:
-            if dist.x != math.inf and dist.y != math.inf:
-                d = Vector2(-self.player[1].pose.position.x, -self.player[1].pose.position.y)
-                v = dist.dirvector(d)
-                print(v.x, v.y, self.player[1].pose.position.x, self.player[1].pose.position.y)
-                pygame.draw.line(window, BLACK_COLOR, (self.player[1].pose.position.x * M2PIX, self.player[1].pose.position.y * M2PIX), (v.x * M2PIX, v.y * M2PIX), 3)
+        # sensors = self.player[0].sensors
+        # player_list = [(round(self.player[1].pose.position.x * M2PIX), round(self.player[1].pose.position.y * M2PIX))]
+        # distances = sensors.calculate_distance(self.player[0], player_list, window)
+        # cont = 0
+        # for dist in distances:
+        #     if dist.x != math.inf:
+        #         v = Vector2(self.player[0].pose.position.x * M2PIX + dist.x, self.player[0].pose.position.y * M2PIX + dist.y)
+        #         color = BLACK_COLOR
+        #         if cont == 40:
+        #             color = WHITE_COLOR
+        #         pygame.draw.line(window, color, (self.player[0].pose.position.x * M2PIX, self.player[0].pose.position.y * M2PIX), (int(v.x), int(v.y)), 3)
+        #     cont += 1
 
 def draw(simulation, window, environment):
     """

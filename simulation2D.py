@@ -21,13 +21,11 @@ def simulation2D(players, shockable = True, full_vision = False):
     :param full_vision: parameter that informs if player will see every thing even if it’s not in the vision cone.
     :type full_vision: bool
     """
-
-    
     behavierBall = FiniteStateMachineBall(MoveForwardStateBall(False))
     poseBall = Pose(PIX2M * SCREEN_WIDTH * 3 / 4.0, PIX2M * SCREEN_HEIGHT / 2.0, 0)
     ball = Ball(poseBall, 1.0, 100, RADIUS_BALL, behavierBall)
     for player in players:
-        player.sensors.set_full_vision = full_vision
+        player.sensors.set_full_vision(full_vision)
         
     return Simulation(np.array(players), ball, shockable, full_vision)
 
@@ -41,7 +39,7 @@ def init_simulation(simulation):
     clock = pygame.time.Clock()
 
     environment = Environment(window)
-    while (datetime.datetime.now() - now).seconds < 5:
+    while (datetime.datetime.now() - now).seconds < 1:
         clock.tick(FREQUENCY)
 
         for event in pygame.event.get():

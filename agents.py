@@ -47,8 +47,10 @@ class Agent:
         :param angular_speed: the robot's angular speed.
         :type angular_speed: float
         """
-        self.linear_speed = clamp(linear_speed, -self.max_linear_speed, self.max_linear_speed)
-        self.angular_speed = clamp(angular_speed, -self.max_angular_speed, self.max_angular_speed)
+        self.linear_speed = clamp(linear_speed, -self.max_linear_speed, 
+            self.max_linear_speed)
+        self.angular_speed = clamp(angular_speed, -self.max_angular_speed, 
+            self.max_angular_speed)
 
     def set_bumper_state_collision(self, bumper_state_collision):
         """
@@ -96,8 +98,10 @@ class Agent:
             self.pose.position.x += v * dt * cos(self.pose.rotation + w * dt / 2.0)
             self.pose.position.y += v * dt * sin(self.pose.rotation + w * dt / 2.0)
         else:
-            self.pose.position.x += (2.0 * v / w) * cos(self.pose.rotation + w * dt / 2.0) * sin(w * dt / 2.0)
-            self.pose.position.y += (2.0 * v / w) * sin(self.pose.rotation + w * dt / 2.0) * sin(w * dt / 2.0)
+            self.pose.position.x += ((2.0 * v / w) * 
+                cos(self.pose.rotation + w * dt / 2.0) * sin(w * dt / 2.0))
+            self.pose.position.y += ((2.0 * v / w) * 
+                sin(self.pose.rotation + w * dt / 2.0) * sin(w * dt / 2.0))
         self.pose.rotation += w * dt
 
     def update(self):
@@ -149,7 +153,7 @@ class Sensors:
     def __init__(self, agent):
         self.flag_points = self.init_flag_points()
         self.agent_center = agent.pose
-        self.full_vision = False
+        self.full_vision = None
 
     def set_full_vision(self, full_vision):
         self.full_vision = full_vision
@@ -164,17 +168,18 @@ class Sensors:
         points = []
         for i in range(11):
             points.append((round(SCREEN_WIDTH * i/10), 0))
-        for i in range(11):
+        for i in range(1,11):
             points.append((SCREEN_WIDTH, round(SCREEN_HEIGHT * i/10)))
-        for i in range(11):
+        for i in range(10):
             points.append((round(SCREEN_WIDTH * i/10), SCREEN_HEIGHT))
-        for i in range(11):
+        for i in range(1,10):
             points.append((0, round(SCREEN_HEIGHT * i/10)))
+        
         
 
         return points
 
-    def calculate_distance(self, list_centers):
+    def calculate_distance(self, agent, list_centers):
         """
         Calculate the vector distance between agent and other players, ball and flags.
 
@@ -185,12 +190,14 @@ class Sensors:
         return: list of distance to points
         rtype: list
         """
+
+        self.agent_center = agent.pose
         points = self.flag_points + list_centers
         dirvector_list = []
-
         for point in points:
-            vector_point = Vector2(point[0], point[1])
-            dirvector = vector_point.dirvector(self.agent_center.position)
+            center = Vector2(self.agent_center.position.x * M2PIX,
+                self.agent_center.position.y * M2PIX)
+            dirvector = Vector2(*point).dirvector(center)
             dirvector = self.is_visible(dirvector)
             dirvector_list.append(dirvector)
         
@@ -210,7 +217,7 @@ class Sensors:
             vector_agent = Vector2(vector_agent.x, vector_agent.y)
             angle = acos(vector_agent.dot(vector)/vector.magnitude())
 
-            if angle <= pi/4 or angle >= 7*pi/4:
+            if angle <= pi/4:
                 return vector
 
             return Vector2(inf, inf)
@@ -256,23 +263,28 @@ class Environment:
         # draw players
         for i in range(1, len(self.list_centers)):
             center = self.list_centers[i]
-            final_position = self.list_radius[i] * np.array([cos(self.list_rotation[i]), sin(self.list_rotation[i])]) + center
+            final_position = self.list_radius[i] * np.array([cos(self.list_rotation[i]), 
+                sin(self.list_rotation[i])]) + center
             if i <= len(self.list_centers)/2:
                 color = RED_COLOR
             else:
                 color = YELLOW_COLOR
             # Drawing player's inner circle
-            pygame.draw.circle(self.window, color, (center[0], center[1]), self.list_radius[i], 0)
+            pygame.draw.circle(self.window, color, (center[0], center[1]), 
+                self.list_radius[i], 0)
             # Drawing player's outer circle
-            pygame.draw.circle(self.window, GRAY_COLOR, (center[0], center[1]), self.list_radius[i], 4)
+            pygame.draw.circle(self.window, GRAY_COLOR, (center[0], center[1]), 
+                self.list_radius[i], 4)
             # Drawing player's orientation
-            pygame.draw.line(self.window, GRAY_COLOR, (center[0], center[1]), (final_position[0], final_position[1]), 3)
+            pygame.draw.line(self.window, GRAY_COLOR, (center[0], center[1]), 
+                (final_position[0], final_position[1]), 3)
 
 
         # draw ball
         center = self.list_centers[0]
         # Drawing player's inner circle
-        pygame.draw.circle(self.window, WHITE_COLOR, (center[0], center[1]), self.list_radius[0], 0)
+        pygame.draw.circle(self.window, WHITE_COLOR, (center[0], center[1]), 
+            self.list_radius[0], 0)
 
     def draw_field(self):
         """
@@ -283,25 +295,34 @@ class Environment:
         self.window.fill((35,142,35))
         
 
-        pygame.draw.circle(self.window, (255,255,255), (round(SCREEN_WIDTH/2), round(SCREEN_HEIGHT/2)), 70, 3)
-        pygame.draw.line(self.window, (255,255,255), (round(SCREEN_WIDTH/2), 30), (round(SCREEN_WIDTH/2), SCREEN_HEIGHT - 30), 3)
-        pygame.draw.line(self.window, (255,255,255), (30, 30), (round(SCREEN_WIDTH)-30, 30), 3)
-        pygame.draw.line(self.window, (255,255,255), (30, 30), (30, round(SCREEN_HEIGHT)-30), 3)
-        pygame.draw.line(self.window, (255,255,255), (round(SCREEN_WIDTH)-30, 30), (round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)-30), 3)
-        pygame.draw.line(self.window, (255,255,255), (30, round(SCREEN_HEIGHT)-30), (round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)-30), 3)
+        pygame.draw.circle(self.window, (255,255,255), (round(SCREEN_WIDTH/2), 
+            round(SCREEN_HEIGHT/2)), 70, 3)
+        pygame.draw.line(self.window, (255,255,255), (round(SCREEN_WIDTH/2), 30), 
+            (round(SCREEN_WIDTH/2), SCREEN_HEIGHT - 30), 3)
+        pygame.draw.line(self.window, (255,255,255), (30, 30), 
+            (round(SCREEN_WIDTH)-30, 30), 3)
+        pygame.draw.line(self.window, (255,255,255), (30, 30), 
+            (30, round(SCREEN_HEIGHT)-30), 3)
+        pygame.draw.line(self.window, (255,255,255), (round(SCREEN_WIDTH)-30, 30), 
+            (round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)-30), 3)
+        pygame.draw.line(self.window, (255,255,255), (30, round(SCREEN_HEIGHT)-30), 
+            (round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)-30), 3)
 
        
     def draw_soccer_goal_and_scoreboard(self):
         """
         Drawing soccer goal and scoreboard.
         """
-        scoreboard = "Left " + str(self.left_goal) + " x " + str(self.right_goal) + " Right"
+        scoreboard="Left " + str(self.left_goal) + " x " + str(self.right_goal) + " Right"
         textsurface = self.font.render(scoreboard, False, WHITE_COLOR)
         # Drawing soccer goal
-        pygame.draw.rect(self.window, (0, 0, 0), Rect(0, round(SCREEN_HEIGHT)/2-100, 30, 200))
-        pygame.draw.rect(self.window, (0, 0, 0), Rect(round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)/2-100, 30, 200))
+        pygame.draw.rect(self.window, (0, 0, 0), 
+            Rect(0, round(SCREEN_HEIGHT)/2-100, 30, 200))
+        pygame.draw.rect(self.window, (0, 0, 0), 
+            Rect(round(SCREEN_WIDTH)-30, round(SCREEN_HEIGHT)/2-100, 30, 200))
         # scoreboard
-        pygame.draw.rect(self.window, (0, 0, 0), Rect(28, round(SCREEN_HEIGHT-30), 250, 30))
+        pygame.draw.rect(self.window, (0, 0, 0), 
+            Rect(28, round(SCREEN_HEIGHT-30), 250, 30))
 
         self.window.blit(self.logo, (round(SCREEN_WIDTH)/2+100,40))
         self.window.blit(textsurface, (40,round(SCREEN_HEIGHT-20)))
@@ -315,7 +336,9 @@ class Environment:
 
         for i in range(1, len(self.list_centers)):
             center = self.list_centers[i]
-            pie(self.window, center[0], center[1], round(2.5 * self.list_radius[i]), (int(RADIAN_TO_DEGREE * self.list_rotation[i])-45)%360, (int(RADIAN_TO_DEGREE * self.list_rotation[i])+45)%360 , WHITE_COLOR)
+            pie(self.window, center[0], center[1], round(2.5 * self.list_radius[i]), 
+                (int(RADIAN_TO_DEGREE * self.list_rotation[i])-45)%360, 
+                (int(RADIAN_TO_DEGREE * self.list_rotation[i])+45)%360 , WHITE_COLOR)
         
     def update(self, params):
         """
