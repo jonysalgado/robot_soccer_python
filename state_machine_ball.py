@@ -2,8 +2,8 @@
 # importation
 import random
 import math
-from constants import *
-from utils import *
+from simulation_soccer_2d.constants import *
+from simulation_soccer_2d.utils import *
 
 # ______________________________________________________________________________
 # class FiniteStateMachineBall

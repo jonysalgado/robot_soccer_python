@@ -1,10 +1,11 @@
 # ______________________________________________________________________________
 # importation
-from constants import *
-from utils import Pose
-from agents import Ball
-from simulation import *
-from state_machine_ball import FiniteStateMachineBall, MoveForwardStateBall
+
+from simulation_soccer_2d.constants import *
+from simulation_soccer_2d.utils import Pose
+from simulation_soccer_2d.agents import Ball
+from simulation_soccer_2d.simulation import *
+from simulation_soccer_2d.state_machine_ball import FiniteStateMachineBall, MoveForwardStateBall
 import datetime
 
 # ______________________________________________________________________________

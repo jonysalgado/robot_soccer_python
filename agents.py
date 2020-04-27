@@ -5,8 +5,8 @@ import numpy as np
 from pygame.rect import Rect
 from pygame.gfxdraw import pie
 from math import sin, cos, fabs, acos, pi, inf
-from constants import *
-from utils import *
+from simulation_soccer_2d.constants import *
+from simulation_soccer_2d.utils import *
 
 # ______________________________________________________________________________
 # class Agent
@@ -235,7 +235,7 @@ class Environment:
     """
     def __init__(self, window):
         self.window = window
-        self.logo = pygame.image.load('team_logo.xpm')
+        self.logo = pygame.image.load('simulation_soccer_2d/team_logo.xpm')
         self.font = pygame.font.SysFont('Comic Sans MS', 30)
         self.list_centers = None
         self.list_radius = None

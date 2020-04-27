@@ -4,9 +4,9 @@ import numpy as np
 from pygame.rect import Rect
 from pygame.gfxdraw import pie
 from math import sin, cos, sqrt, pi
-from constants import *
-from utils import *
-from agents import *
+from simulation_soccer_2d.constants import *
+from simulation_soccer_2d.utils import *
+from simulation_soccer_2d.agents import *
 from copy import deepcopy
 import datetime
 
@@ -360,7 +360,7 @@ class Simulation:
         # test
         # sensors = self.player[0].sensors
         # player_list = [(round(self.player[1].pose.position.x * M2PIX), round(self.player[1].pose.position.y * M2PIX))]
-        # distances = sensors.calculate_distance(self.player[0], player_list, window)
+        # distances = sensors.calculate_distance(self.player[0], player_list)
         # cont = 0
         # for dist in distances:
         #     if dist.x != math.inf:
