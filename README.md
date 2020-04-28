@@ -6,7 +6,7 @@ the sensors's information and move the robot. The rest of simulation already is 
 For use this simulation, you can clone this repository in your project, this is specified 
 in the installation instructions.
 
-![](https://drive.google.com/file/d/1Txwtl1L7PMlFlTb8W0CsYo98k9_oNaEL/view?usp=sharing)
+![](https://user-images.githubusercontent.com/50979367/80439962-0ff43000-88de-11ea-84db-4bef850e44b3.png)
 
 # Installation Guide
 
