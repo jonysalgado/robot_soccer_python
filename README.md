@@ -30,14 +30,14 @@ cd ..
 ```
 to import the repository:
 
-```
+```python
 import sys
 sys.path.append('/simulation-soccer-2d')
 ```
 
 for testing you can copy the code bellow:
 
-```
+```python
 from simulation_soccer_2d.simulation2D import simulation2D, init_simulation
 from simulation_soccer_2d.agents import Player, Pose, Sensors
 
