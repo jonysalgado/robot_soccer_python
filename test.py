@@ -1,5 +1,5 @@
-from simulation_soccer_2d.simulation2D import simulation2D, init_simulation
-from simulation_soccer_2d.agents import Player, Pose, Sensors
+from simulation2D import simulation2D, init_simulation
+from agents import Player, Pose, Sensors
 import pygame
 
 simulation = simulation2D([Player(Pose(300 * 0.01, 300 * 0.01, 0), 200, 200, 0.15), Player(Pose(400 * 0.01, 400 * 0.01, 3.14), 20, 20, 0.2),

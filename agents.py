@@ -235,7 +235,6 @@ class Environment:
     """
     def __init__(self, window):
         self.window = window
-        self.logo = pygame.image.load('simulation_soccer_2d/team_logo.xpm')
         self.font = pygame.font.SysFont('Comic Sans MS', 30)
         self.list_centers = None
         self.list_radius = None
@@ -324,9 +323,8 @@ class Environment:
         pygame.draw.rect(self.window, (0, 0, 0), 
             Rect(28, round(SCREEN_HEIGHT-30), 250, 30))
 
-        self.window.blit(self.logo, (round(SCREEN_WIDTH)/2+100,40))
         self.window.blit(textsurface, (40,round(SCREEN_HEIGHT-20)))
-        
+
     def draw_vision(self):
         """
         Drawing the vision of the players.
