@@ -1,6 +1,6 @@
 # simulation_soccer_2d
 
-<img src="https://img.shields.io/static/v1?label=Version&message=1.0.0&color=7159c1?style=for-the-badge"/> 
+<img src="https://img.shields.io/static/v1?label=Version&message=1.0.1&color=7159c1?style=for-the-badge"/> 
 
 simulation_soccer_2d is a template for simulation to study AI. Basicaly, think in a physical 
 robot: you need to implement a mind of this roboty only. In this simulation, you can get 
