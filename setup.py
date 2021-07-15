@@ -1,14 +1,20 @@
-from distutils.core import setup
+from setuptools import setup
+
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 setup(
   name = 'robot_soccer_python',         # How you named your package folder (MyLib)
   packages = ['robot_soccer_python'],   # Chose the same as "name"
   version = '1.0.3',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'A robot soccer simulation 2D environment for python.',   # Give a short description about your library
+  long_description=long_description,
+  long_description_content_type="text/markdown",
   author = 'Jony Salgado',                   # Type in your name
   author_email = 'jonysalgadofilho@gmail.com',      # Type in your E-Mail
   url = 'https://github.com/jonysalgado/robot_soccer_python',   # Provide either the link to your github or to your website
-  download_url = 'https://github.com/jonysalgado/robot_soccer_python/archive/refs/tags/v_01.3.tar.gz',    # I explain this later on
+  download_url = 'https://github.com/jonysalgado/robot_soccer_python/archive/refs/tags/v_01.4.tar.gz',    # I explain this later on
   keywords = ['SIMULATION', 'SOCCER', 'ROBOT', 'AI', 'ENVIRONMENT', 'PYTHON'],   # Keywords that define your package best
   install_requires=[            # I get to this in a second
         'numpy',
