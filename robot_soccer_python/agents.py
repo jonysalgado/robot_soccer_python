@@ -5,8 +5,8 @@ import numpy as np
 from pygame.rect import Rect
 from pygame.gfxdraw import pie
 from math import sin, cos, fabs, acos, pi, inf
-from simulation_soccer_2d.constants import *
-from simulation_soccer_2d.utils import *
+from robot_soccer_python.constants import *
+from robot_soccer_python.utils import *
 
 # ______________________________________________________________________________
 # class Agent
@@ -28,7 +28,7 @@ class Agent:
         :type bumper_state: boolean
         """
         self.pose = pose
-        self.linear_speed = 1.0
+        self.linear_speed = 0.0
         self.angular_speed = 0.0
         self.max_linear_speed = max_linear_speed
         self.max_angular_speed = max_angular_speed

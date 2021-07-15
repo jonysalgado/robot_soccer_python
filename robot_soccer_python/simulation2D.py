@@ -1,11 +1,11 @@
 # ______________________________________________________________________________
 # importation
 
-from simulation_soccer_2d.constants import *
-from simulation_soccer_2d.utils import Pose
-from simulation_soccer_2d.agents import Ball
-from simulation_soccer_2d.simulation import *
-from simulation_soccer_2d.state_machine_ball import FiniteStateMachineBall, MoveForwardStateBall
+from robot_soccer_python.constants import *
+from robot_soccer_python.utils import Pose
+from robot_soccer_python.agents import Ball
+from robot_soccer_python.simulation import *
+from robot_soccer_python.state_machine_ball import FiniteStateMachineBall, MoveForwardStateBall
 import datetime
 
 # ______________________________________________________________________________
@@ -23,7 +23,7 @@ def simulation2D(players, shockable = True, full_vision = False):
     :type full_vision: bool
     """
     behavierBall = FiniteStateMachineBall(MoveForwardStateBall(False))
-    poseBall = Pose(PIX2M * SCREEN_WIDTH * 3 / 4.0, PIX2M * SCREEN_HEIGHT / 2.0, 0)
+    poseBall = Pose(PIX2M * SCREEN_WIDTH*1/4.0, PIX2M * SCREEN_HEIGHT / 2.0, 0)
     ball = Ball(poseBall, 1.0, 100, RADIUS_BALL, behavierBall)
     for player in players:
         player.sensors.set_full_vision(full_vision)
@@ -36,7 +36,9 @@ def init_simulation(simulation):
     now = datetime.datetime.now()
     pygame.init()
     window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Robot soccer 2D simulation")
+    pygame.display.set_caption("Robot soccer 2D environment")
+    icon = pygame.image.load('robot_soccer_python\icon.PNG')
+    pygame.display.set_icon(icon)
     clock = pygame.time.Clock()
 
     environment = Environment(window)
