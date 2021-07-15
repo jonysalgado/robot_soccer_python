@@ -357,19 +357,19 @@ class Simulation:
 
         environment.draw(params)
 
-        # test
-        sensors = self.player[0].sensors
-        player_list = [(round(self.player[2].pose.position.x * M2PIX), round(self.player[2].pose.position.y * M2PIX))]
-        distances = sensors.calculate_distance(self.player[0], player_list)
-        cont = 0
-        for dist in distances:
-            if dist.x != math.inf:
-                v = Vector2(self.player[0].pose.position.x * M2PIX + dist.x, self.player[0].pose.position.y * M2PIX + dist.y)
-                color = BLACK_COLOR
-                if cont == 40:
-                    color = WHITE_COLOR
-                pygame.draw.line(window, color, (self.player[0].pose.position.x * M2PIX, self.player[0].pose.position.y * M2PIX), (int(v.x), int(v.y)), 3)
-            cont += 1
+        # # test
+        # sensors = self.player[0].sensors
+        # player_list = [(round(self.player[2].pose.position.x * M2PIX), round(self.player[2].pose.position.y * M2PIX))]
+        # distances = sensors.calculate_distance(self.player[0], player_list)
+        # cont = 0
+        # for dist in distances:
+        #     if dist.x != math.inf:
+        #         v = Vector2(self.player[0].pose.position.x * M2PIX + dist.x, self.player[0].pose.position.y * M2PIX + dist.y)
+        #         color = BLACK_COLOR
+        #         if cont == 40:
+        #             color = WHITE_COLOR
+        #         pygame.draw.line(window, color, (self.player[0].pose.position.x * M2PIX, self.player[0].pose.position.y * M2PIX), (int(v.x), int(v.y)), 3)
+        #     cont += 1
 
 def draw(simulation, window, environment):
     """

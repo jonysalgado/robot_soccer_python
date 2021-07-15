@@ -235,7 +235,7 @@ class Environment:
     """
     def __init__(self, window):
         self.window = window
-        self.font = pygame.font.SysFont('Comic Sans MS', 30)
+        self.font = pygame.font.SysFont('Comic Sans MS', 20)
         self.list_centers = None
         self.list_radius = None
         self.list_rotation = None
@@ -323,7 +323,7 @@ class Environment:
         pygame.draw.rect(self.window, (0, 0, 0), 
             Rect(28, round(SCREEN_HEIGHT-30), 250, 30))
 
-        self.window.blit(textsurface, (40,round(SCREEN_HEIGHT-20)))
+        self.window.blit(textsurface, (40,round(SCREEN_HEIGHT-30)))
 
     def draw_vision(self):
         """
