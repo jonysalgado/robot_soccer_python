@@ -1,6 +1,6 @@
 # Robot soccer Python
 
-![Version](https://img.shields.io/static/v1?label=Version&message=1.0.6&color=7159c1?style=for-the-badge)
+![Version](https://img.shields.io/static/v1?label=Version&message=1.0.7&color=7159c1?style=for-the-badge)
 ![Version](https://img.shields.io/static/v1?label=Dependence&message=pygame&color=red)
 
 ![](https://user-images.githubusercontent.com/50979367/125829618-9f371d88-ff18-4107-8a0d-60ede54bb0e6.PNG)

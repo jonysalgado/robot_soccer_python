@@ -38,8 +38,8 @@ def init_simulation(simulation):
     pygame.init()
     window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Robot soccer 2D environment")
-    icon = pygame.image.load(os.getcwd() + '/icon.PNG')
-    pygame.display.set_icon(icon)
+    # icon = pygame.image.load(os.getcwd() + '/icon.PNG')
+    # pygame.display.set_icon(icon)
     clock = pygame.time.Clock()
 
     environment = Environment(window)
