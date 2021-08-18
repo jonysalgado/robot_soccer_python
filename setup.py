@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
   name = 'robot_soccer_python',         # How you named your package folder (MyLib)
   packages = ['robot_soccer_python'],   # Chose the same as "name"
-  version = '1.0.3',      # Start with a small number and increase it with every change you make
+  version = '1.0.5',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'A robot soccer simulation 2D environment for python.',   # Give a short description about your library
   long_description=long_description,
