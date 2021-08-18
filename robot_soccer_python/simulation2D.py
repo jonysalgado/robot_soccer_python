@@ -7,6 +7,7 @@ from robot_soccer_python.agents import Ball
 from robot_soccer_python.simulation import *
 from robot_soccer_python.state_machine_ball import FiniteStateMachineBall, MoveForwardStateBall
 import datetime
+import os
 
 # ______________________________________________________________________________
 # simulation2D function
@@ -37,7 +38,7 @@ def init_simulation(simulation):
     pygame.init()
     window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Robot soccer 2D environment")
-    icon = pygame.image.load('icon.PNG')
+    icon = pygame.image.load(os.getcwd() + '/icon.PNG')
     pygame.display.set_icon(icon)
     clock = pygame.time.Clock()
 
